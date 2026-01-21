@@ -27,10 +27,32 @@ A high-performance C++ project focused on low-latency performance optimizations 
 ```
 low-latency-project/
 ├── include/
-│   └── lowlatency.h          # Header file with utility functions
+│   ├── core/                 # Core types, memory, time, ring buffers
+│   ├── order/                # Order types and book interfaces
+│   ├── engine/               # Engine interfaces, sessions, risk checks
+│   ├── market/               # Market data interfaces
+│   ├── net/                  # Sockets, protocols, codecs
+│   ├── persistence/          # Journaling, replay interfaces
+│   ├── metrics/              # Telemetry interfaces
+│   ├── utils/                # Minimal shared helpers
+│   └── lowlatency.h          # Legacy/umbrella header (optional)
 ├── src/
+│   ├── core/                 # Core implementations
+│   ├── order/                # Order book + matching implementations
+│   ├── engine/               # Engine orchestration
+│   ├── market/               # Market data handling
+│   ├── net/                  # Networking implementations
+│   ├── persistence/          # Journaling/replay implementations
+│   ├── metrics/              # Metrics implementations
+│   ├── utils/                # Helper implementations
 │   ├── main.cpp              # Main entry point
-│   └── lowlatency.cpp        # Implementation file
+│   └── lowlatency.cpp        # Legacy/utility implementation (optional)
+├── tests/                    # Unit/integration tests
+├── benchmarks/               # Microbenchmarks and latency tests
+├── config/                   # Runtime configuration files
+├── scripts/                  # Build/dev scripts
+├── docs/                     # Design docs and notes
+├── examples/                 # Minimal usage examples
 ├── build/                    # Build output directory (git-ignored)
 ├── CMakeLists.txt            # CMake configuration
 ├── compile_simple.bat        # Simple build script (Windows)
