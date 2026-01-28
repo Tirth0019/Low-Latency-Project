@@ -10,6 +10,22 @@ A high-performance C++ project focused on low-latency performance optimizations 
 - **CMake build system** for easy integration
 - Optimized compilation flags for maximum performance
 
+## Architecture Overview
+
+- **Core**: fundamental types, timing, memory utilities.
+- **Order**: order model, book, and matching interfaces.
+- **Engine**: orchestration and lifecycle control.
+- **Market**: market data ingestion and state.
+- **Net**: transport, framing, and codecs.
+- **Persistence**: journaling and recovery hooks.
+- **Metrics**: lightweight counters and latency tracking.
+
+## Current Scope (Skeleton)
+
+This repository currently provides the system skeleton: build setup, module layout,
+and foundational headers. Matching logic, order book logic, and networking are
+intentionally not implemented yet.
+
 ## Prerequisites
 
 ### Required

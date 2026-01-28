@@ -33,6 +33,7 @@ target_include_directories(LowLatencyProject
         include/persistence
         include/metrics
         include/utils
+        config
 )
 
 # -----------------------------
