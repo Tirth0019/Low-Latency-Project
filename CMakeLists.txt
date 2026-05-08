@@ -37,6 +37,12 @@ target_include_directories(LowLatencyProject
 )
 
 # -----------------------------
+# Tests
+# -----------------------------
+add_executable(test_ring_buffer tests/test_ring_buffer.cpp)
+target_include_directories(test_ring_buffer PRIVATE include)
+
+# -----------------------------
 # Compiler warnings
 # -----------------------------
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
