@@ -21,8 +21,13 @@ Engine::Engine(RiskLimits limits)
       matcher_(std::make_unique<MatchingEngine>(*book_)), limits_(limits) {
 
   risk_ = std::make_unique<RiskChecker>(RiskChecker{limits_, risk_state_});
-  latency_samples_.reserve(100'000);
   feed_handler_ = std::make_unique<market::FeedHandler>(inbound_);
+  
+  double ns_per_tick = core::time::calibrate_tsc_ns();
+  tracker_ = std::make_unique<metrics::LatencyTracker>(ns_per_tick);
+  
+  journal_ = std::make_unique<persistence::Journal>();
+  journal_->open("engine.wal");
 }
 
 Engine::~Engine() {}
@@ -83,11 +88,24 @@ void Engine::run() {
     }
     *aggressive = inbound_order; // copy contents
 
+    // Journal inbound order
+    {
+      uint8_t wire_buf[128];
+      size_t len = net::Codec::encode_new_order(wire_buf, sizeof(wire_buf), inbound_order);
+      if (len > 0) journal_->write(wire_buf, (uint16_t)len);
+    }
+
     auto trades = matcher_->match(aggressive);
 
     // 6. post-fill risk update
-    for (auto &t : trades)
+    for (auto &t : trades) {
       risk_->on_fill(inbound_order.side, t.trade_qty);
+      
+      // Journal trade event
+      uint8_t trade_buf[128];
+      size_t tlen = net::Codec::encode_trade_report(trade_buf, sizeof(trade_buf), t);
+      if (tlen > 0) journal_->write(trade_buf, (uint16_t)tlen);
+    }
 
     // 7. emit to outbound ring
     for (auto &t : trades)
@@ -98,7 +116,12 @@ void Engine::run() {
 #else
     uint64_t tsc_out = __rdtsc(); // ← latency measurement ends here
 #endif
-    latency_samples_.push_back(tsc_out - tsc_in);
+    tracker_->record(tsc_out - tsc_in);
+
+    // Periodic checkpoint
+    if (++journal_record_count_ % 1000 == 0) {
+        journal_->checkpoint();
+    }
 
     session_.next_seq();
   }

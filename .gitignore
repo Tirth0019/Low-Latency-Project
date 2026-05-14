@@ -20,6 +20,11 @@ Makefile
 *.dll
 *.so
 *.dylib
+*.ilk
+*.sdf
+*.wal
+*.lib
+*.tlog
 
 # IDE files
 .vscode/

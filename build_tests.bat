@@ -17,5 +17,17 @@ cl /Zi /EHsc /std:c++17 /Iinclude tests/codec_test.cpp /Fe:codec_test.exe
 if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
 echo "Building loopback_test..."
-cl /Zi /EHsc /std:c++17 /Iinclude tests/day4/loopback_test.cpp src/engine/engine.cpp src/engine/matching_engine.cpp src/order/order_book.cpp src/net/socket.cpp ws2_32.lib /Fe:loopback_test.exe
+cl /Zi /EHsc /std:c++17 /Iinclude tests/day4/loopback_test.cpp src/engine/engine.cpp src/engine/matching_engine.cpp src/order/order_book.cpp src/net/socket.cpp src/persistence/journal.cpp ws2_32.lib /Fe:loopback_test.exe
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+
+echo "Building replay_test..."
+cl /Zi /EHsc /std:c++17 /Iinclude tests/day5/replay_test.cpp src/engine/engine.cpp src/engine/matching_engine.cpp src/order/order_book.cpp src/net/socket.cpp src/persistence/journal.cpp ws2_32.lib /Fe:replay_test.exe
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+
+echo "Building order_book_bench..."
+cl /Zi /EHsc /O2 /std:c++17 /Iinclude /Ibenchmarks benchmarks/order_book_bench.cpp src/engine/matching_engine.cpp src/order/order_book.cpp /Fe:order_book_bench.exe
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+
+echo " Building dump_wal...\
+cl /Zi /EHsc /std:c++17 scratch/dump_wal.cpp /Fe:dump_wal.exe
 if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%

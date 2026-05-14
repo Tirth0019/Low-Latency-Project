@@ -9,33 +9,9 @@
 #include "engine/engine.hpp"
 #include "core/time.hpp"
 
-#ifdef _WIN32
-#include <intrin.h>
-#else
-#include <x86intrin.h>
-#endif
-
 using namespace core;
 using namespace order;
 using namespace engine;
-
-// TSC calibration — required before p99 means anything
-double calibrate_tsc_ns() {
-    auto t0 = core::time::MonotonicClock::now_ns();
-#ifdef _WIN32
-    uint64_t r0 = __rdtsc();
-#else
-    uint64_t r0 = __rdtsc();
-#endif
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-#ifdef _WIN32
-    uint64_t r1 = __rdtsc();
-#else
-    uint64_t r1 = __rdtsc();
-#endif
-    auto t1 = core::time::MonotonicClock::now_ns();
-    return (double)(t1 - t0) / (double)(r1 - r0); // ns per tick
-}
 
 void synthetic_feed(RingBuffer<Order, 4096>& ring, int count) {
     std::mt19937 rng(42);
@@ -76,7 +52,7 @@ void print_latency_report(std::vector<uint64_t>& samples, double ns_per_tick) {
 
 int main() {
     std::cout << "Calibrating TSC... this will take 100ms.\n";
-    double ns_per_tick = calibrate_tsc_ns();
+    double ns_per_tick = core::time::calibrate_tsc_ns();
     std::cout << "TSC calibration: " << ns_per_tick << " ns/tick\n";
 
     RiskLimits limits{

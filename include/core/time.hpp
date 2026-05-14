@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include "core/types.hpp"
+#include <thread>
 
 // Intrinsic headers for __rdtsc
 #if defined(_MSC_VER)
@@ -54,6 +55,20 @@ public:
 
 inline Timestamp duration_ns(Timestamp start_ns, Timestamp end_ns) {
     return end_ns - start_ns;
+}
+
+// TSC calibration — required before p99 means anything
+inline double calibrate_tsc_ns() {
+    auto t0 = MonotonicClock::now_ns();
+    uint64_t r0 = rdtsc();
+    
+    // Use standard sleep to avoid dependency on thread header if possible, 
+    // but sleep_for is the most reliable cross-platform.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    uint64_t r1 = rdtsc();
+    auto t1 = MonotonicClock::now_ns();
+    return (double)(t1 - t0) / (double)(r1 - r0); // ns per tick
 }
 
 } // namespace time

@@ -33,6 +33,7 @@ public:
     
     // Test utility
     std::size_t size() const { return order_map_.size(); }
+    core::memory::ObjectPool<Order, 65536>& pool() { return *pool_; }
 
 private:
     // bids: highest price first

@@ -12,6 +12,8 @@
 #include "net/socket.hpp"
 #include "net/codec.hpp"
 #include "market/feed_handler.hpp"
+#include "persistence/journal.hpp"
+#include "metrics/latency_tracker.hpp"
 #include <thread>
 
 namespace engine {
@@ -30,7 +32,8 @@ public:
     // Accessors for benchmarking
     core::RingBuffer<order::Order, 4096>& get_inbound_ring() { return inbound_; }
     core::RingBuffer<order::TradeEvent, 4096>& get_outbound_ring() { return outbound_; }
-    std::vector<uint64_t>& get_latency_samples() { return latency_samples_; }
+    metrics::LatencyTracker* get_tracker() { return tracker_.get(); }
+    order::OrderBook& get_book() { return *book_; }
 
 private:
     std::unique_ptr<order::OrderBook>     book_;
@@ -42,7 +45,10 @@ private:
     core::RingBuffer<order::Order, 4096>      inbound_;
     core::RingBuffer<order::TradeEvent, 4096> outbound_;
 
-    std::vector<uint64_t>                 latency_samples_;
+    std::unique_ptr<metrics::LatencyTracker> tracker_;
+    std::unique_ptr<persistence::Journal>    journal_;
+    uint64_t                                  journal_record_count_{0};
+
     std::atomic<bool>                     running_{false};
     RiskLimits                            limits_;
 
