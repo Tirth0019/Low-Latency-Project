@@ -17,7 +17,7 @@ public:
     // Pre-allocate pointers to all elements
     free_list_.reserve(Capacity);
     for (std::size_t i = 0; i < Capacity; ++i) {
-      free_list_.push_back(&pool_[i]);
+      free_list_.push_back(static_cast<T*>(pool_[i]));
     }
   }
 

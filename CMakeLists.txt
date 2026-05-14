@@ -15,8 +15,8 @@ add_executable(LowLatencyProject
     src/main.cpp
     src/lowlatency.cpp
     # add more .cpp files here, e.g.:
-    # src/order/order_book.cpp
-    # src/engine/matching_engine.cpp
+    src/order/order_book.cpp
+    src/engine/matching_engine.cpp
 )
 
 # -----------------------------
@@ -41,6 +41,13 @@ target_include_directories(LowLatencyProject
 # -----------------------------
 add_executable(test_ring_buffer tests/test_ring_buffer.cpp)
 target_include_directories(test_ring_buffer PRIVATE include)
+
+add_executable(order_book_test 
+    tests/order_book_test.cpp
+    src/order/order_book.cpp
+    src/engine/matching_engine.cpp
+)
+target_include_directories(order_book_test PRIVATE include)
 
 # -----------------------------
 # Compiler warnings

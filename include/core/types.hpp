@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
+#include <functional>
 
 namespace core {
 
@@ -45,3 +47,12 @@ enum class OrderType : std::uint8_t {
 };
 
 } // namespace core
+
+namespace std {
+    template <typename T, typename Tag>
+    struct hash<core::StrongType<T, Tag>> {
+        std::size_t operator()(const core::StrongType<T, Tag>& st) const noexcept {
+            return std::hash<T>()(st.value);
+        }
+    };
+} // namespace std

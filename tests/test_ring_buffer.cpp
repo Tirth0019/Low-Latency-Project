@@ -1,4 +1,6 @@
 #include "core/ring_buffer.hpp"
+#include "core/memory.hpp"
+#include "order/order.hpp"
 #include <iostream>
 #include <thread>
 #include <vector>
@@ -79,13 +81,23 @@ void test_round_trip() {
     std::cout << "test_round_trip passed.\n";
 }
 
+void test_object_pool() {
+    std::cout << "Running test_object_pool...\n";
+    core::memory::ObjectPool<order::Order, 8> pool;
+    order::Order* o = pool.allocate();
+    assert(o != nullptr);
+    pool.deallocate(o);
+    std::cout << "test_object_pool passed.\n";
+}
+
 int main() {
-    std::cout << "Starting RingBuffer tests...\n";
+    std::cout << "Starting tests...\n";
     
     test_empty_buffer();
     test_full_buffer();
     test_round_trip();
+    test_object_pool();
     
-    std::cout << "All RingBuffer tests passed!\n";
+    std::cout << "All tests passed!\n";
     return 0;
 }
