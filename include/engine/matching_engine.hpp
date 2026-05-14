@@ -10,23 +10,24 @@ using namespace order;
 
 class MatchingEngine {
 public:
-    MatchingEngine() = default;
+    explicit MatchingEngine(order::OrderBook& book) : book_(book) {}
 
     // Process a new incoming limit order.
     // Returns a list of TradeEvents if any matches occurred.
-    std::vector<TradeEvent> process_new_order(OrderId id, Side side, Price price, Quantity qty);
+    std::vector<order::TradeEvent> process_new_order(core::OrderId id, core::Side side, core::Price price, core::Quantity qty);
 
     // Cancel an existing order.
-    bool process_cancel_order(OrderId id);
-
-    // Get reference to the internal order book (for testing/inspection)
-    const OrderBook& get_book() const { return book_; }
-
-private:
-    OrderBook book_;
+    bool process_cancel_order(core::OrderId id);
 
     // Core matching logic
-    std::vector<TradeEvent> match(Order* aggressive);
+    std::vector<order::TradeEvent> match(order::Order* aggressive);
+
+    // Get reference to the internal order book (for testing/inspection)
+    const order::OrderBook& get_book() const { return book_; }
+    order::OrderBook& get_book() { return book_; }
+
+private:
+    order::OrderBook& book_;
 };
 
 } // namespace engine

@@ -22,7 +22,8 @@ using namespace engine;
 
 void test_1_add_bids() {
     std::cout << "Test 1: Add 3 bids, check best_bid()\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     engine->process_new_order(OrderId(1), Side::Buy, Price(100), Quantity(10));
     ASSERT_BOOK_SIZE(engine, 1);
@@ -40,7 +41,8 @@ void test_1_add_bids() {
 
 void test_2_add_asks() {
     std::cout << "Test 2: Add 2 asks, check best_ask()\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     engine->process_new_order(OrderId(1), Side::Sell, Price(200), Quantity(10));
     ASSERT_BOOK_SIZE(engine, 1);
@@ -55,7 +57,8 @@ void test_2_add_asks() {
 
 void test_3_cancel_best_bid() {
     std::cout << "Test 3: Cancel best bid - verify best_bid() updates\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     engine->process_new_order(OrderId(1), Side::Buy, Price(100), Quantity(10));
     engine->process_new_order(OrderId(2), Side::Buy, Price(105), Quantity(10)); // Best
@@ -71,7 +74,8 @@ void test_3_cancel_best_bid() {
 
 void test_4_full_fill() {
     std::cout << "Test 4: Full fill - aggressive sweeps passive\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     // Passive
     engine->process_new_order(OrderId(1), Side::Sell, Price(200), Quantity(10));
@@ -93,7 +97,8 @@ void test_4_full_fill() {
 
 void test_5_partial_fill_aggressive_smaller() {
     std::cout << "Test 5: Partial fill - aggressive qty < passive qty\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     // Passive
     engine->process_new_order(OrderId(1), Side::Sell, Price(200), Quantity(20));
@@ -113,7 +118,8 @@ void test_5_partial_fill_aggressive_smaller() {
 
 void test_6_partial_fill_aggressive_larger() {
     std::cout << "Test 6: Partial fill - aggressive qty > passive qty\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     // Passive
     engine->process_new_order(OrderId(1), Side::Sell, Price(200), Quantity(10));
@@ -134,7 +140,8 @@ void test_6_partial_fill_aggressive_larger() {
 
 void test_7_no_cross() {
     std::cout << "Test 7: No cross - bid price < ask price\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     engine->process_new_order(OrderId(1), Side::Sell, Price(200), Quantity(10));
     engine->process_new_order(OrderId(2), Side::Buy, Price(190), Quantity(10));
@@ -146,7 +153,8 @@ void test_7_no_cross() {
 
 void test_8_pool_exhaustion() {
     std::cout << "Test 8: Pool exhaustion - add 65537 orders\n";
-    auto engine = std::make_unique<MatchingEngine>();
+    auto book = std::make_unique<OrderBook>();
+    auto engine = std::make_unique<MatchingEngine>(*book);
     
     // Add 65536 distinct price levels
     for (int i = 0; i < 65536; ++i) {

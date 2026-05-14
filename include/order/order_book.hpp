@@ -8,6 +8,7 @@
 
 namespace engine {
     class MatchingEngine; // Forward declaration
+    class Engine;
 }
 
 namespace order {
@@ -34,13 +35,11 @@ public:
     std::size_t size() const { return order_map_.size(); }
 
 private:
-    friend class engine::MatchingEngine;
-
     // bids: highest price first
     std::map<Price, PriceLevel, std::greater<Price>> bids_;
     
     // asks: lowest price first
-    std::map<Price, PriceLevel> asks_;
+    std::map<Price, PriceLevel, std::less<Price>> asks_;
 
     // O(1) best bid/ask — cached iterators, invalidated on level removal
     decltype(bids_)::iterator best_bid_;
@@ -48,6 +47,9 @@ private:
 
     // O(1) order lookup for cancel/modify
     std::unordered_map<OrderId, Order*> order_map_;
+
+    friend class engine::MatchingEngine;
+    friend class engine::Engine;
 
     // Object pool for fast allocation
     std::unique_ptr<core::memory::ObjectPool<Order, 65536>> pool_;

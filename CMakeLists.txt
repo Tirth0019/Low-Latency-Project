@@ -49,6 +49,14 @@ add_executable(order_book_test
 )
 target_include_directories(order_book_test PRIVATE include)
 
+add_executable(day3_benchmark
+    src/demo/synthetic_feed.cpp
+    src/engine/engine.cpp
+    src/engine/matching_engine.cpp
+    src/order/order_book.cpp
+)
+target_include_directories(day3_benchmark PRIVATE include)
+
 # -----------------------------
 # Compiler warnings
 # -----------------------------
