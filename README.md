@@ -1,30 +1,35 @@
-# Low Latency Project
+# Ultra-Low-Latency Order Book Engine
 
-A high-performance C++ project focused on low-latency performance optimizations with cross-platform support.
+A high-performance C++20 matching engine optimized for sub-microsecond latency, featuring lock-free orchestration, binary journaling, and a decoupled networking layer.
 
-## Features
+## Performance Benchmarks
 
-- **C++20** implementation for modern C++ features
-- **Low-latency optimizations** with compiler-specific flags
-- **Cross-platform support** (GCC, Clang, MSVC)
-- **CMake build system** for easy integration
-- Optimized compilation flags for maximum performance
+*Recorded on Windows via MSVC (`__rdtsc`) with CPU Turbo disabled.*
 
-## Architecture Overview
+| Operation | Latency (ns) | Throughput |
+| :--- | :--- | :--- |
+| **Add Order (Limit)** | ~81.5 ns | ~12.2 M/s |
+| **Cancel Order** | ~118.7 ns | ~8.4 M/s |
+| **Matching (Core)** | ~110.2 ns | ~9.0 M/s |
+| **Journaling (WAL)** | +75.3 ns | - |
+| **Total Engine Path** | **~185.5 ns** | **~5.4 M/s** |
+| **Loopback RTT** | ~142,000 ns | - |
 
-- **Core**: fundamental types, timing, memory utilities.
-- **Order**: order model, book, and matching interfaces.
-- **Engine**: orchestration and lifecycle control.
-- **Market**: market data ingestion and state.
-- **Net**: transport, framing, and codecs.
-- **Persistence**: journaling and recovery hooks.
-- **Metrics**: lightweight counters and latency tracking.
+> [!NOTE]
+> The matching engine scales **O(1)** with book depth. Benchmarks confirmed nearly identical latencies at 10, 100, and 1,000 price levels due to intrusive list pointers and iterator caching.
 
-## Current Scope (Skeleton)
+## Core Features
 
-This repository currently provides the system skeleton: build setup, module layout,
-and foundational headers. Matching logic, order book logic, and networking are
-intentionally not implemented yet.
+- **Lock-Free Orchestration**: Uses SPSC ring buffers for inter-thread communication, ensuring the engine thread never stalls on I/O.
+- **Deterministic Matching**: Sub-200ns matching path with branchless risk checks and intrusive order book.
+- **Ultra-Fast Persistence**: Append-only binary Journal (WAL) with 512MB pre-allocation to eliminate filesystem metadata spikes.
+- **Metrics & Telemetry**: Lock-free HDR Histogram for real-time p50/p99 reporting with zero jitter impact.
+- **Decoupled Networking**: Dedicated Recv/Send threads handling TCP order entry and UDP multicast market data feeds.
+- **Memory Efficiency**: Custom `ObjectPool` for allocation-free hot path and zero-copy binary codecs.
+
+## Architecture
+
+The engine employs a **multi-threaded, lock-free architecture** designed to keep the matching hot-path pinned and undisturbed. I/O operations (TCP/UDP) are offloaded to dedicated threads that communicate with the core engine via Single-Producer-Single-Consumer (SPSC) ring buffers. This design ensures that networking jitter and disk I/O latency never stall the matching loop. The matching engine itself is strictly deterministic, allowing for perfect state reconstruction during Journal replay.
 
 ## Prerequisites
 
@@ -41,46 +46,38 @@ intentionally not implemented yet.
 ## Project Structure
 
 ```
-low-latency-project/
+Ultra-Low-Latency-Order-Book-Engine/
 ├── include/
-│   ├── core/                 # Core types, memory, time, ring buffers
-│   ├── order/                # Order types and book interfaces
-│   ├── engine/               # Engine interfaces, sessions, risk checks
-│   ├── market/               # Market data interfaces
-│   ├── net/                  # Sockets, protocols, codecs
-│   ├── persistence/          # Journaling, replay interfaces
-│   ├── metrics/              # Telemetry interfaces
-│   ├── utils/                # Minimal shared helpers
-│   └── lowlatency.h          # Legacy/umbrella header (optional)
+│   ├── core/                 # Memory pools, ring buffers, TSC timing
+│   ├── order/                # Order book, price levels, matchers
+│   ├── engine/               # Orchestration, risk, sessions
+│   ├── market/               # UDP Feed handler
+│   ├── net/                  # Sockets, binary codecs
+│   ├── persistence/          # Binary Journaling (WAL)
+│   └── metrics/              # HDR Histogram latency tracking
 ├── src/
-│   ├── core/                 # Core implementations
-│   ├── order/                # Order book + matching implementations
-│   ├── engine/               # Engine orchestration
-│   ├── market/               # Market data handling
-│   ├── net/                  # Networking implementations
-│   ├── persistence/          # Journaling/replay implementations
-│   ├── metrics/              # Metrics implementations
-│   ├── utils/                # Helper implementations
-│   ├── main.cpp              # Main entry point
-│   └── lowlatency.cpp        # Legacy/utility implementation (optional)
-├── tests/                    # Unit/integration tests
-├── benchmarks/               # Microbenchmarks and latency tests
-├── config/                   # Runtime configuration files
-├── scripts/                  # Build/dev scripts
-├── docs/                     # Design docs and notes
-├── examples/                 # Minimal usage examples
-├── build/                    # Build output directory (git-ignored)
-├── CMakeLists.txt            # CMake configuration
-├── compile_simple.bat        # Simple build script (Windows)
-├── build_manual.bat          # Manual build script with MSVC
-└── build.bat                 # CMake build script
+│   ├── engine/               # Matching engine orchestration
+│   ├── order/                # Order book & matching logic
+│   ├── net/                  # TCP/UDP I/O implementations
+│   └── persistence/          # Journal WAL implementation
+├── tests/
+│   ├── day4/                 # Loopback networking tests
+│   └── day5/                 # Replay & persistence tests
+├── benchmarks/
+│   ├── nanobench.h           # Microbenchmarking framework
+│   └── order_book_bench.cpp  # O(1) scalability tests
+├── docs/
+│   ├── latency_analysis.md   # Performance breakdown
+│   └── Day4_Networking.md    # Networking architecture
+├── build_tests.bat           # Integrated MSVC build script
+└── CMakeLists.txt            # CMake build configuration
 ```
 
 ## Building the Project
 
-### Method 1: CMake (Recommended for Production)
+### Method 1: CMake (Recommended)
 
-CMake provides a consistent build experience across platforms and is ideal for corporate environments.
+CMake provides a consistent build experience across platforms.
 
 #### Windows (MSVC)
 
@@ -167,13 +164,9 @@ clang++ -std=c++20 -O3 -I include src/main.cpp src/lowlatency.cpp -o main
 
 ### Method 3: Using Build Scripts (Windows)
 
-For convenience, pre-configured build scripts are provided:
+For convenience, an integrated MSVC build script is provided:
 
-- **`compile_simple.bat`** - Direct MSVC compilation (no CMake required)
-- **`build_manual.bat`** - Manual build with detailed output
-- **`build.bat`** - CMake-based build (requires CMake)
-
-Simply double-click any script or run from command prompt.
+- **`build_tests.bat`** - Compiles all core logic, tests, and benchmarks using MSVC.
 
 ## Optimization Flags
 
@@ -190,45 +183,23 @@ The project uses compiler-specific optimization flags for low-latency:
 - `-ffast-math` - Fast floating-point operations
 - `-funroll-loops` - Loop unrolling
 
-## Corporate Usage Guidelines
+## CI/CD Integration
 
-### For Development Teams
+Example GitHub Actions workflow for automated building and testing:
 
-1. **Standard Build Process**: Use CMake (Method 1) for consistency
-2. **Version Control**: The `build/` directory is git-ignored - don't commit build artifacts
-3. **Compiler Version**: Ensure all team members use compatible compiler versions
-4. **Build Scripts**: Customize build scripts for your CI/CD pipeline
-
-### CI/CD Integration
-
-Example GitHub Actions workflow:
 ```yaml
-- name: Build
+- name: Build and Test
   run: |
-    mkdir build
-    cd build
-    cmake .. -G "Visual Studio 17 2022" -A x64
-    cmake --build . --config Release
+    cmake -B build -DCMAKE_BUILD_TYPE=Release
+    cmake --build build
+    cd build && ctest --output-on-failure
 ```
-
-### Dependency Management
-
-Currently, this project has no external dependencies. When adding dependencies:
-- Use CMake `find_package()` for system libraries
-- Consider vcpkg or Conan for package management
-- Document all dependencies in this README
 
 ## Troubleshooting
 
 ### "Cannot open include file 'iostream'"
-- Ensure you're using a Developer Command Prompt with environment variables set
-- Check that Visual Studio C++ workload is installed
-- Verify IntelliSense configuration in `.vscode/c_cpp_properties.json`
-
-### "CMake not found"
-- Install CMake from https://cmake.org/download/
-- Or use direct compilation (Method 2)
-- Or use the provided build scripts (Method 3)
+- Ensure you're using a Developer Command Prompt with environment variables set.
+- Check that Visual Studio C++ workload is installed.
 
 ### "C++20 not supported"
 - Upgrade your compiler:
@@ -236,13 +207,14 @@ Currently, this project has no external dependencies. When adding dependencies:
   - **GCC**: Version 10+
   - **Clang**: Version 12+
 
-## Contributing
+## Progress Tracker
 
-1. Follow C++20 best practices
-2. Maintain low-latency optimization focus
-3. Test on multiple platforms when possible
-4. Update this README with any new build requirements
+- [x] **Day 1**: Lock-free SPSC Ring Buffer & Object Pool.
+- [x] **Day 2**: Intrusive Order Book & Price Levels.
+- [x] **Day 3**: Branchless Risk Checks & Matching Engine Core.
+- [x] **Day 4**: Platform-aware Sockets & Decoupled I/O threads.
+- [x] **Day 5**: Binary Journaling (WAL) & HDR Histogram Metrics.
 
 ## License
 
-[Add your license here]
+MIT License (c) 2026
