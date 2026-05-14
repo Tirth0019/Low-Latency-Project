@@ -5,7 +5,7 @@ namespace order {
 
 using namespace core;
 
-OrderBook::OrderBook() {
+OrderBook::OrderBook() : pool_(std::make_unique<core::memory::ObjectPool<Order, 65536>>()) {
     best_bid_ = bids_.end();
     best_ask_ = asks_.end();
 }
@@ -28,7 +28,7 @@ void OrderBook::refresh_best_bid_ask() {
 }
 
 Order* OrderBook::add(OrderId id, Side side, Price price, Quantity qty) {
-    Order* o = pool_.allocate();
+    Order* o = pool_->allocate();
     if (!o) return nullptr;
 
     o->id = id;
@@ -102,7 +102,7 @@ bool OrderBook::cancel(OrderId id) {
     }
 
     order_map_.erase(it);
-    pool_.deallocate(o);
+    pool_->deallocate(o);
     refresh_best_bid_ask();
 
     return true;

@@ -6,7 +6,7 @@ namespace engine {
 
 std::vector<TradeEvent> MatchingEngine::process_new_order(OrderId id, Side side, Price price, Quantity qty) {
     // 1. Allocate a temporary aggressive order (we allocate from the pool so it can be rested later)
-    Order* aggressive = book_.pool_.allocate();
+    Order* aggressive = book_.pool_->allocate();
     if (!aggressive) {
         return {}; // Pool exhausted
     }
@@ -90,7 +90,7 @@ std::vector<TradeEvent> MatchingEngine::match(Order* aggressive) {
         if ((uint64_t)passive->remaining_qty == 0) {
             best_level.remove(passive);
             book_.order_map_.erase(passive->id);
-            book_.pool_.deallocate(passive);
+            book_.pool_->deallocate(passive);
             
             if (best_level.empty()) {
                 if (hits_asks) {
@@ -109,7 +109,7 @@ std::vector<TradeEvent> MatchingEngine::match(Order* aggressive) {
     if ((uint64_t)aggressive->remaining_qty > 0) {
         book_.add_resting(aggressive); // rest unfilled portion
     } else {
-        book_.pool_.deallocate(aggressive); // fully filled aggressive doesn't rest
+        book_.pool_->deallocate(aggressive); // fully filled aggressive doesn't rest
     }
 
     book_.refresh_best_bid_ask();

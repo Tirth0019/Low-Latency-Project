@@ -3,6 +3,7 @@
 #include "order/price_level.hpp"
 #include <map>
 #include <unordered_map>
+#include <memory>
 #include "core/memory.hpp"
 
 namespace engine {
@@ -49,8 +50,7 @@ private:
     std::unordered_map<OrderId, Order*> order_map_;
 
     // Object pool for fast allocation
-    // TODO Day 3: pool must be heap-allocated when MatchingEngine is embedded in orchestration loop
-    core::memory::ObjectPool<Order, 65536> pool_;
+    std::unique_ptr<core::memory::ObjectPool<Order, 65536>> pool_;
 
     // Internal helpers
     void refresh_best_bid_ask(Side side, Price price);
