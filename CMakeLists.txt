@@ -17,6 +17,7 @@ add_executable(LowLatencyProject
     # add more .cpp files here, e.g.:
     src/order/order_book.cpp
     src/engine/matching_engine.cpp
+    src/net/socket.cpp
 )
 
 # -----------------------------
@@ -54,8 +55,23 @@ add_executable(day3_benchmark
     src/engine/engine.cpp
     src/engine/matching_engine.cpp
     src/order/order_book.cpp
+    src/net/socket.cpp
 )
 target_include_directories(day3_benchmark PRIVATE include)
+
+add_executable(loopback_test
+    tests/day4/loopback_test.cpp
+    src/engine/engine.cpp
+    src/engine/matching_engine.cpp
+    src/order/order_book.cpp
+    src/net/socket.cpp
+)
+target_include_directories(loopback_test PRIVATE include)
+
+add_executable(codec_test
+    tests/codec_test.cpp
+)
+target_include_directories(codec_test PRIVATE include)
 
 # -----------------------------
 # Compiler warnings

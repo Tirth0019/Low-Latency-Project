@@ -1,6 +1,8 @@
 #include <iostream>
+#include "net/socket.hpp"
 
 int main() {
-    std::cout << "Low Latency Project Skeleton Initialized\n";
+    WsaGuard wsa;
+    std::cout << "Low Latency Project Skeleton Initialized with Winsock\n";
     return 0;
 }

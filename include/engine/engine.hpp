@@ -9,6 +9,10 @@
 #include "engine/session.hpp"
 #include "engine/risk.hpp"
 #include "core/ring_buffer.hpp"
+#include "net/socket.hpp"
+#include "net/codec.hpp"
+#include "market/feed_handler.hpp"
+#include <thread>
 
 namespace engine {
 
@@ -20,6 +24,8 @@ public:
     void pin_to_core(int core_id);
     void run();
     void stop();
+
+    void start_networking(uint16_t recv_port, uint16_t send_port, uint16_t feed_port);
 
     // Accessors for benchmarking
     core::RingBuffer<order::Order, 4096>& get_inbound_ring() { return inbound_; }
@@ -39,6 +45,14 @@ private:
     std::vector<uint64_t>                 latency_samples_;
     std::atomic<bool>                     running_{false};
     RiskLimits                            limits_;
+
+    std::unique_ptr<market::FeedHandler>  feed_handler_;
+    std::thread                           recv_thread_;
+    std::thread                           send_thread_;
+    std::thread                           feed_thread_;
+
+    void recv_loop(uint16_t port);
+    void send_loop(uint16_t port);
 };
 
 } // namespace engine

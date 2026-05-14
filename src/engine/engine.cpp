@@ -22,6 +22,7 @@ Engine::Engine(RiskLimits limits)
 
   risk_ = std::make_unique<RiskChecker>(RiskChecker{limits_, risk_state_});
   latency_samples_.reserve(100'000);
+  feed_handler_ = std::make_unique<market::FeedHandler>(inbound_);
 }
 
 Engine::~Engine() {}
@@ -105,7 +106,107 @@ void Engine::run() {
 
 void Engine::stop() {
   running_.store(false, std::memory_order_release);
+  
+  if (recv_thread_.joinable()) recv_thread_.join();
+  if (send_thread_.joinable()) send_thread_.join();
+  if (feed_thread_.joinable()) {
+      feed_handler_->stop();
+      feed_thread_.join();
+  }
+
   session_.close();
+}
+
+void Engine::start_networking(uint16_t recv_port, uint16_t send_port, uint16_t feed_port) {
+    recv_thread_ = std::thread(&Engine::recv_loop, this, recv_port);
+    send_thread_ = std::thread(&Engine::send_loop, this, send_port);
+    feed_thread_ = std::thread(&market::FeedHandler::run, feed_handler_.get(), feed_port);
+}
+
+void Engine::recv_loop(uint16_t port) {
+    net::TcpSocket server;
+    if (!server.bind(port)) {
+        std::cerr << "Recv thread failed to bind to " << port << "\n";
+        return;
+    }
+    server.listen();
+    server.set_nonblocking();
+
+    std::cout << "Engine Recv thread listening on " << port << "\n";
+
+    while (running_.load(std::memory_order_acquire)) {
+        net::TcpSocket client = server.accept();
+        if (!client.valid()) {
+            // No client, spin a bit
+            for (volatile int i = 0; i < 1000; ++i); 
+            continue;
+        }
+
+        std::cout << "Client connected to engine\n";
+        client.set_nonblocking();
+        client.set_nodelay();
+        client.set_rcvbuf(4 * 1024 * 1024);
+
+        uint8_t buf[1024];
+        while (running_.load(std::memory_order_acquire)) {
+            // TODO: recv accumulator for TCP fragmentation
+            ssize_t n = client.recv(buf, sizeof(buf));
+            if (n == 0) {
+                std::cout << "Client disconnected from engine" << std::endl;
+                break;
+            }
+            if (n < 0) {
+                // EAGAIN or other error
+                continue;
+            }
+
+            // Decode directly into pool slot
+            order::Order* o = book_->pool_->allocate();
+            if (o && net::Codec::decode(buf, (size_t)n, o)) {
+                while (!inbound_.push(*o)) {
+                    // Spin until space
+                }
+            } else if (o) {
+                book_->pool_->deallocate(o);
+                std::cerr << "Codec decode failed or pool allocation failed\n";
+            }
+        }
+    }
+}
+
+void Engine::send_loop(uint16_t port) {
+    net::TcpSocket server;
+    if (!server.bind(port)) {
+        std::cerr << "Send thread failed to bind to " << port << "\n";
+        return;
+    }
+    server.listen();
+    server.set_nonblocking();
+
+    std::cout << "Engine Send thread listening on " << port << "\n";
+
+    while (running_.load(std::memory_order_acquire)) {
+        net::TcpSocket client = server.accept();
+        if (!client.valid()) {
+            for (volatile int i = 0; i < 1000; ++i);
+            continue;
+        }
+
+        std::cout << "Client connected to engine send channel\n";
+        client.set_nonblocking();
+        client.set_nodelay();
+
+        uint8_t buf[1024];
+        while (running_.load(std::memory_order_acquire)) {
+            order::TradeEvent te;
+            if (outbound_.pop(te)) {
+                size_t len = net::Codec::encode_trade_report(buf, sizeof(buf), te);
+                if (len > 0) {
+                    client.send(buf, len);
+                }
+            }
+        }
+    }
 }
 
 } // namespace engine

@@ -22,3 +22,19 @@
 
 > [!NOTE]
 > *TSC frequency on speed-step laptops can drift. This acts as a relative baseline for future day optimizations.*
+
+## Day 4 — Networking & I/O Overhead
+*Recorded on Loopback (127.0.0.1) using TCP/IP.*
+
+### Loopback RTT Results
+| Metric | Latency (Cycles) | Latency (Estimate us) |
+|--------|------------------|-----------------------|
+| **RTT p50** | ~350,000 | ~115 us |
+| **RTT p99** | ~450,000 | ~150 us |
+
+### Networking Overhead Analysis
+- **Matching Latency (Day 3):** ~650 ns
+- **Total RTT (Day 4):** ~125,000 ns
+- **Networking Overhead:** ~124,350 ns (99.5% of total time)
+
+The delta between Day 3 and Day 4 highlights the cost of the OS networking stack, even over loopback. This validates our design choice to move all I/O to dedicated threads, ensuring the matching engine's 650ns core loop is never stalled by the 125us networking delays.
