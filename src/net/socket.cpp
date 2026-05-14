@@ -15,7 +15,7 @@
 
 namespace net {
 
-bool TcpSocket::bind(uint16_t port) {
+bool net::TcpSocket::bind(uint16_t port) {
     if (fd_ == INVALID) {
         fd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (fd_ == INVALID) {
@@ -36,7 +36,7 @@ bool TcpSocket::bind(uint16_t port) {
     return true;
 }
 
-bool TcpSocket::connect(const char* ip, uint16_t port) {
+bool net::TcpSocket::connect(const char* ip, uint16_t port) {
     if (fd_ == INVALID) {
         fd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (fd_ == INVALID) {
@@ -61,19 +61,19 @@ bool TcpSocket::connect(const char* ip, uint16_t port) {
     return true;
 }
 
-bool TcpSocket::listen(int backlog) {
+bool net::TcpSocket::listen(int backlog) {
     if (::listen(fd_, backlog) == -1) {
         return false;
     }
     return true;
 }
 
-TcpSocket TcpSocket::accept() {
+net::TcpSocket net::TcpSocket::accept() {
     SocketHandle client_fd = ::accept(fd_, nullptr, nullptr);
     return TcpSocket(client_fd);
 }
 
-bool TcpSocket::set_nonblocking() {
+bool net::TcpSocket::set_nonblocking() {
 #ifdef _WIN32
     unsigned long mode = 1;
     return ioctlsocket(fd_, FIONBIO, &mode) == 0;
@@ -84,11 +84,11 @@ bool TcpSocket::set_nonblocking() {
 #endif
 }
 
-bool TcpSocket::set_rcvbuf(int size_bytes) {
+bool net::TcpSocket::set_rcvbuf(int size_bytes) {
     return setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, (const char*)&size_bytes, sizeof(size_bytes)) == 0;
 }
 
-bool TcpSocket::set_nodelay() {
+bool net::TcpSocket::set_nodelay() {
     int one = 1;
     return setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, (const char*)&one, sizeof(one)) == 0;
 }
@@ -98,15 +98,15 @@ bool TcpSocket::set_tos(uint8_t tos) {
     return setsockopt(fd_, IPPROTO_IP, IP_TOS, (const char*)&val, sizeof(val)) == 0;
 }
 
-ssize_t TcpSocket::send(const void* buf, size_t len) {
+ssize_t net::TcpSocket::send(const void* buf, size_t len) {
     return ::send(fd_, (const char*)buf, (int)len, 0);
 }
 
-ssize_t TcpSocket::recv(void* buf, size_t len) {
+ssize_t net::TcpSocket::recv(void* buf, size_t len) {
     return ::recv(fd_, (char*)buf, (int)len, 0);
 }
 
-void TcpSocket::close() {
+void net::TcpSocket::close() {
     if (fd_ != INVALID) {
 #ifdef _WIN32
         closesocket(fd_);
@@ -119,14 +119,14 @@ void TcpSocket::close() {
 
 // UdpSocket Implementation
 
-bool UdpSocket::create() {
+bool net::UdpSocket::create() {
     if (fd_ == INVALID) {
         fd_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     }
     return fd_ != INVALID;
 }
 
-bool UdpSocket::bind(uint16_t port) {
+bool net::UdpSocket::bind(uint16_t port) {
     if (!create()) return false;
 
     sockaddr_in addr;
@@ -149,11 +149,11 @@ bool UdpSocket::set_nonblocking() {
 #endif
 }
 
-bool UdpSocket::set_rcvbuf(int size_bytes) {
+bool net::UdpSocket::set_rcvbuf(int size_bytes) {
     return setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, (const char*)&size_bytes, sizeof(size_bytes)) == 0;
 }
 
-ssize_t UdpSocket::sendto(const void* buf, size_t len, const char* ip, uint16_t port) {
+ssize_t net::UdpSocket::sendto(const void* buf, size_t len, const char* ip, uint16_t port) {
     if (!create()) return -1;
 
     sockaddr_in addr;
@@ -164,7 +164,7 @@ ssize_t UdpSocket::sendto(const void* buf, size_t len, const char* ip, uint16_t 
     return ::sendto(fd_, (const char*)buf, (int)len, 0, (struct sockaddr*)&addr, sizeof(addr));
 }
 
-ssize_t UdpSocket::recvfrom(void* buf, size_t len, char* out_ip, uint16_t* out_port) {
+ssize_t net::UdpSocket::recvfrom(void* buf, size_t len, char* out_ip, uint16_t* out_port) {
     if (!create()) return -1;
 
     sockaddr_in addr;
@@ -182,7 +182,7 @@ ssize_t UdpSocket::recvfrom(void* buf, size_t len, char* out_ip, uint16_t* out_p
     return n;
 }
 
-void UdpSocket::close() {
+void net::UdpSocket::close() {
     if (fd_ != INVALID) {
 #ifdef _WIN32
         closesocket(fd_);
