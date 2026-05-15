@@ -60,6 +60,7 @@ private:
     std::thread                           feed_thread_;
     std::thread                           engine_thread_;
     std::thread                           http_thread_;
+    std::thread                           synth_thread_;
 
     std::atomic<uint64_t>                 order_count_{0};
     std::unique_ptr<metrics::HttpServer> http_server_;

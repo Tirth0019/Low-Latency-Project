@@ -1,6 +1,7 @@
 #include "engine/engine.hpp"
 #include "core/time.hpp"
 #include <iostream>
+#include <random>
 
 #ifdef _WIN32
 #include <intrin.h>
@@ -140,6 +141,30 @@ void Engine::start() {
     http_thread_ = std::thread([this]() {
         http_server_->run(8080);
     });
+
+    // Start synthetic order generator
+    synth_thread_ = std::thread([this]() {
+        std::mt19937 rng(42);
+        std::uniform_int_distribution<> price_dist(99, 101);
+        std::uniform_int_distribution<> qty_dist(1, 100);
+        std::uniform_int_distribution<> side_dist(0, 1);
+        uint64_t id = 0;
+
+        while (running_.load(std::memory_order_acquire)) {
+            for (int i = 0; i < 100; ++i) {
+                order::Order o{};
+                o.id    = core::OrderId{id++};
+                o.price = core::Price{(int64_t)price_dist(rng)};
+                o.qty   = o.remaining_qty = core::Quantity{(uint64_t)qty_dist(rng)};
+                o.side  = side_dist(rng) ? core::Side::Buy : core::Side::Sell;
+                o.state = order::OrderState::New;
+                o.timestamp_ns = core::time::MonotonicClock::now_ns();
+                while (!inbound_.push(o) &&
+                       running_.load(std::memory_order_acquire)) {}
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    });
 }
 
 void Engine::stop() {
@@ -154,6 +179,7 @@ void Engine::stop() {
   
   http_server_->stop();
   if (http_thread_.joinable()) http_thread_.join();
+  if (synth_thread_.joinable()) synth_thread_.join();
 
   if (engine_thread_.joinable()) engine_thread_.join();
 
