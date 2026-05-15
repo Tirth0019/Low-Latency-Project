@@ -82,9 +82,9 @@
         .status-badge {
             padding: 0.5rem 1rem;
             border-radius: 20px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: var(--success-color);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
             font-size: 0.875rem;
             font-weight: 600;
             display: flex;
@@ -95,9 +95,9 @@
         .status-dot {
             width: 8px;
             height: 8px;
-            background-color: var(--success-color);
+            background-color: var(--danger-color);
             border-radius: 50%;
-            box-shadow: 0 0 10px var(--success-color);
+            box-shadow: 0 0 10px var(--danger-color);
             animation: pulse 2s infinite;
         }
 
@@ -267,7 +267,7 @@
         </div>
         <div class="status-badge" id="conn-status">
             <div class="status-dot"></div>
-            CONNECTED
+            CONNECTING...
         </div>
     </header>
 
@@ -361,8 +361,13 @@
             const statusBadge = document.getElementById('conn-status');
             const statusDot = statusBadge.querySelector('.status-dot');
             
+            // PERMANENT SOLUTION: Use allorigins proxy to bypass HTTPS Mixed Content security block
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(EC2_URL)}&cb=${Date.now()}`;
+            
             try {
-                const r = await fetch(EC2_URL);
+                const r = await fetch(proxyUrl);
+                if (!r.ok) throw new Error('Proxy or Network error');
+                
                 const d = await r.json();
 
                 document.getElementById('p99').textContent = d.p99_ns + ' ns';
@@ -370,7 +375,6 @@
                 document.getElementById('p999').textContent = d.p999_ns;
                 document.getElementById('ops').textContent = d.orders_per_sec.toLocaleString();
                 
-                // Simple uptime calculation if provided by engine, or just a placeholder
                 if (d.uptime_seconds) {
                     const h = Math.floor(d.uptime_seconds / 3600).toString().padStart(2, '0');
                     const m = Math.floor((d.uptime_seconds % 3600) / 60).toString().padStart(2, '0');
@@ -388,15 +392,15 @@
                 statusBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
                 statusDot.style.backgroundColor = 'var(--success-color)';
                 statusDot.style.boxShadow = '0 0 10px var(--success-color)';
-                statusBadge.lastChild.textContent = ' CONNECTED';
+                statusBadge.innerHTML = '<div class="status-dot" style="background-color: var(--success-color); box-shadow: 0 0 10px var(--success-color); animation: pulse 2s infinite;"></div> CONNECTED';
             } catch(e) {
-                document.getElementById('p99').textContent = '--- ns';
+                console.error("Polling error:", e);
                 statusBadge.style.color = 'var(--danger-color)';
                 statusBadge.style.background = 'rgba(239, 68, 68, 0.1)';
                 statusBadge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
                 statusDot.style.backgroundColor = 'var(--danger-color)';
                 statusDot.style.boxShadow = '0 0 10px var(--danger-color)';
-                statusBadge.lastChild.textContent = ' RECONNECTING...';
+                statusBadge.innerHTML = '<div class="status-dot"></div> RECONNECTING...';
             }
         }
 
