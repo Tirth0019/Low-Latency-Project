@@ -9,6 +9,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # -----------------------------
+# Dependencies
+# -----------------------------
+find_package(Threads REQUIRED)
+
+# -----------------------------
 # Executable
 # -----------------------------
 add_executable(LowLatencyProject
@@ -22,6 +27,8 @@ add_executable(LowLatencyProject
     src/persistence/journal.cpp
     src/metrics/http_server.cpp
 )
+
+target_link_libraries(LowLatencyProject PRIVATE Threads::Threads)
 
 # -----------------------------
 # Include directories

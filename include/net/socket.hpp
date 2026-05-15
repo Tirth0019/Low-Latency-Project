@@ -13,6 +13,7 @@
   #pragma comment(lib, "ws2_32.lib")
   using SocketHandle = SOCKET;
   using ssize_t = long long;
+  using socklen_t = int;
   constexpr SocketHandle INVALID = INVALID_SOCKET;
 #else
   #include <sys/socket.h>
