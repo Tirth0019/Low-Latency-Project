@@ -100,7 +100,7 @@ int main() {
     engine.stop();
     engine_thread.join();
 
-    print_latency_report(engine.get_latency_samples(), ns_per_tick);
+    // print_latency_report(engine.get_latency_samples(), ns_per_tick);
 
     return 0;
 }
