@@ -54,7 +54,13 @@ bool net::TcpSocket::connect(const char* ip, uint16_t port) {
     }
 
     if (::connect(fd_, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        std::cout << "Socket connect failed to " << ip << ":" << port << " Error: " << WSAGetLastError() << std::endl;
+        std::cout << "Socket connect failed to " << ip << ":" << port << " Error: " 
+#ifdef _WIN32
+    << WSAGetLastError()
+#else
+    << errno
+#endif
+    << std::endl;
         return false;
     }
     std::cout << "Socket connected to " << ip << ":" << port << std::endl;
@@ -143,7 +149,7 @@ bool UdpSocket::set_nonblocking() {
     unsigned long mode = 1;
     return ioctlsocket(fd_, FIONBIO, &mode) == 0;
 #else
-    int flags = fcntl(fd_, f_GETFL, 0);
+    int flags = fcntl(fd_, F_GETFL, 0);
     if (flags == -1) return false;
     return fcntl(fd_, F_SETFL, flags | O_NONBLOCK) == 0;
 #endif
@@ -169,7 +175,7 @@ ssize_t net::UdpSocket::recvfrom(void* buf, size_t len, char* out_ip, uint16_t* 
 
     sockaddr_in addr;
     int addr_len = sizeof(addr);
-    ssize_t n = ::recvfrom(fd_, (char*)buf, (int)len, 0, (struct sockaddr*)&addr, &addr_len);
+    ssize_t n = ::recvfrom(fd_, (char*)buf, (int)len, 0, (struct sockaddr*)&addr, (socklen_t*)&addr_len);
     
     if (n > 0) {
         if (out_ip) {
