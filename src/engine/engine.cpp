@@ -50,7 +50,6 @@ void Engine::pin_to_core(int core_id) {
 void Engine::run() {
   session_.open(1);
   std::cout << "Session 1 Active\n"; // Required verification log
-  running_.store(true, std::memory_order_release);
 
   while (running_.load(std::memory_order_acquire)) {
     uint64_t now = core::time::MonotonicClock::now_ns();
@@ -133,6 +132,8 @@ void Engine::run() {
 }
 
 void Engine::start() {
+    running_.store(true, std::memory_order_release);
+
     // Port 8080 is reserved for HTTP/Metrics Dashboard
     // Order Entry: 9001, Trade Reports: 9002, Market Feed: 9003
     start_networking(9001, 9002, 9003);
