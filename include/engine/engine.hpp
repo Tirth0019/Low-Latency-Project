@@ -14,6 +14,7 @@
 #include "market/feed_handler.hpp"
 #include "persistence/journal.hpp"
 #include "metrics/latency_tracker.hpp"
+#include "metrics/http_server.hpp"
 #include <thread>
 
 namespace engine {
@@ -58,6 +59,10 @@ private:
     std::thread                           send_thread_;
     std::thread                           feed_thread_;
     std::thread                           engine_thread_;
+    std::thread                           http_thread_;
+
+    std::atomic<uint64_t>                 order_count_{0};
+    std::unique_ptr<metrics::HttpServer> http_server_;
 
     void recv_loop(uint16_t port);
     void send_loop(uint16_t port);

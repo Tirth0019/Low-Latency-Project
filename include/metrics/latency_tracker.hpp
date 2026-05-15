@@ -79,6 +79,26 @@ public:
         }
         printf("----------------------------------\n");
     }
+
+    uint64_t get_percentile(double pct) const {
+        uint64_t total = 0;
+        for (int i = 0; i < NUM_BUCKETS; ++i)
+            total += buckets_[i].count.load(std::memory_order_relaxed);
+        if (total == 0) return 0;
+
+        uint64_t target = (uint64_t)(total * pct);
+        uint64_t cumulative = 0;
+        for (int i = 0; i < NUM_BUCKETS; ++i) {
+            cumulative += buckets_[i].count.load(std::memory_order_relaxed);
+            if (cumulative >= target)
+                return (uint64_t)((1ULL << i) * ns_per_tick_);
+        }
+        return 0;
+    }
+
+    uint64_t get_p50()  const { return get_percentile(0.50); }
+    uint64_t get_p99()  const { return get_percentile(0.99); }
+    uint64_t get_p999() const { return get_percentile(0.999); }
 };
 
 } // namespace metrics

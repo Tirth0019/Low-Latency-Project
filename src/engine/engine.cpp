@@ -26,8 +26,11 @@ Engine::Engine(RiskLimits limits)
   double ns_per_tick = core::time::calibrate_tsc_ns();
   tracker_ = std::make_unique<metrics::LatencyTracker>(ns_per_tick);
   
+  
   journal_ = std::make_unique<persistence::Journal>();
   journal_->open("engine.wal");
+
+  http_server_ = std::make_unique<metrics::HttpServer>(*tracker_, order_count_);
 }
 
 Engine::~Engine() {}
@@ -124,6 +127,7 @@ void Engine::run() {
     }
 
     session_.next_seq();
+    order_count_.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
@@ -133,6 +137,9 @@ void Engine::start() {
     start_networking(9001, 9002, 9003);
     
     engine_thread_ = std::thread(&Engine::run, this);
+    http_thread_ = std::thread([this]() {
+        http_server_->run(8080);
+    });
 }
 
 void Engine::stop() {
@@ -144,6 +151,10 @@ void Engine::stop() {
       feed_handler_->stop();
       feed_thread_.join();
   }
+  
+  http_server_->stop();
+  if (http_thread_.joinable()) http_thread_.join();
+
   if (engine_thread_.joinable()) engine_thread_.join();
 
   session_.close();

@@ -20,6 +20,7 @@ add_executable(LowLatencyProject
     src/engine/matching_engine.cpp
     src/net/socket.cpp
     src/persistence/journal.cpp
+    src/metrics/http_server.cpp
 )
 
 # -----------------------------
