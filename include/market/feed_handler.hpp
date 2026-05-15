@@ -35,7 +35,7 @@ public:
             ssize_t n = sock_.recvfrom(buf, sizeof(buf));
             if (n < 0) {
                 // For non-blocking, wait a bit
-                for (volatile int i = 0; i < 1000; ++i);
+                for (volatile int i = 0; i < 1000; i = i + 1);
                 continue;
             }
             if (n == 0) continue;

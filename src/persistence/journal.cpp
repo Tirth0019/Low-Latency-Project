@@ -76,6 +76,7 @@ void Journal::flush_buffer() {
     assert(success && written == BUFFER_SIZE);
 #else
     ssize_t n = ::write(fd_, write_buf_, BUFFER_SIZE);
+    (void)n;
     assert(n == BUFFER_SIZE);
 #endif
     write_pos_ += BUFFER_SIZE;

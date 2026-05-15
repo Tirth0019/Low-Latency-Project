@@ -9,5 +9,5 @@ void performLowLatencyOperation() {
     // Placeholder implementation
     // Add your low latency code here
     volatile int dummy = 0;
-    dummy++; // Prevent optimization
+    dummy = dummy + 1; // Prevent optimization
 }

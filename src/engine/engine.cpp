@@ -208,7 +208,7 @@ void Engine::recv_loop(uint16_t port) {
         net::TcpSocket client = server.accept();
         if (!client.valid()) {
             // No client, spin a bit
-            for (volatile int i = 0; i < 1000; ++i); 
+            for (volatile int i = 0; i < 1000; i = i + 1); 
             continue;
         }
 
@@ -258,7 +258,7 @@ void Engine::send_loop(uint16_t port) {
     while (running_.load(std::memory_order_acquire)) {
         net::TcpSocket client = server.accept();
         if (!client.valid()) {
-            for (volatile int i = 0; i < 1000; ++i);
+            for (volatile int i = 0; i < 1000; i = i + 1);
             continue;
         }
 
