@@ -309,7 +309,7 @@
     </div>
 
     <script>
-        const EC2_URL = 'http://54.123.45.67:8080/metrics';
+        const EC2_URL = 'http://13.201.203.232:8080/metrics';
         const history = []; // rolling 60 samples
         const labels = Array.from({length: 60}, (_, i) => i);
 
@@ -361,12 +361,9 @@
             const statusBadge = document.getElementById('conn-status');
             const statusDot = statusBadge.querySelector('.status-dot');
             
-            // PERMANENT SOLUTION: Use allorigins proxy to bypass HTTPS Mixed Content security block
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(EC2_URL)}&cb=${Date.now()}`;
-            
             try {
-                const r = await fetch(proxyUrl);
-                if (!r.ok) throw new Error('Proxy or Network error');
+                const r = await fetch(EC2_URL);
+                if (!r.ok) throw new Error('Network error');
                 
                 const d = await r.json();
 
