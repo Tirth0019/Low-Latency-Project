@@ -25,6 +25,7 @@ public:
 
     void pin_to_core(int core_id);
     void run();
+    void start();
     void stop();
 
     void start_networking(uint16_t recv_port, uint16_t send_port, uint16_t feed_port);
@@ -56,6 +57,7 @@ private:
     std::thread                           recv_thread_;
     std::thread                           send_thread_;
     std::thread                           feed_thread_;
+    std::thread                           engine_thread_;
 
     void recv_loop(uint16_t port);
     void send_loop(uint16_t port);

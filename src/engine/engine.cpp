@@ -127,6 +127,14 @@ void Engine::run() {
   }
 }
 
+void Engine::start() {
+    // Port 8080 is reserved for HTTP/Metrics Dashboard
+    // Order Entry: 9001, Trade Reports: 9002, Market Feed: 9003
+    start_networking(9001, 9002, 9003);
+    
+    engine_thread_ = std::thread(&Engine::run, this);
+}
+
 void Engine::stop() {
   running_.store(false, std::memory_order_release);
   
@@ -136,6 +144,7 @@ void Engine::stop() {
       feed_handler_->stop();
       feed_thread_.join();
   }
+  if (engine_thread_.joinable()) engine_thread_.join();
 
   session_.close();
 }

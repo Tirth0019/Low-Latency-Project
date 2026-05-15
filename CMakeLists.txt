@@ -16,8 +16,10 @@ add_executable(LowLatencyProject
     src/lowlatency.cpp
     # add more .cpp files here, e.g.:
     src/order/order_book.cpp
+    src/engine/engine.cpp
     src/engine/matching_engine.cpp
     src/net/socket.cpp
+    src/persistence/journal.cpp
 )
 
 # -----------------------------
